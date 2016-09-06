@@ -1,0 +1,16 @@
+#!/bin/sh
+
+for FILE in `ls -a`; do
+  if [ "$FILE" = "." ]; then
+    continue
+  elif [ "$FILE" = ".." ]; then
+    continue
+  else
+     echo "offdroid folder must be empty during initialization, "
+          "but it is not" 1>&2
+     exit 1
+  fi
+done
+
+echo > .init
+     

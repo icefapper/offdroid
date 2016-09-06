@@ -33,14 +33,40 @@ non-existent() {
   fi
 }
     
+ensure-init() {
+  if [ -e ".init" ]; then
+    return
+  else
+    echo "offdroid workspace not initialized" 1>&2
+    exit 1
+  fi
+}
+
+ensure-have-xml() {
+  if [ -d ".offdroid-xml" ]; then
+    return
+  else
+    echo "xml files were not found." 1>&2
+    exit 2
+  fi
+}
+
+ensure-sdk-set() {
+     if [ -f .offdroid-sdk-folder ]; then
+       return
+     else
+       echo "no android sdk has been set." #TODO tell them use create-barebones-sdk or set-sdk accordingly
+     fi 
+}
+
 non-null "$1"
 if [ "$1" = "init" ]; then
   ./init
 elif [ "$1" = "fetch-xmls" ]; then
   ensure-init
-  fetch-xmls
+  ./fetch-xmls
 elif [ "$1" = "list-packages" ]; then
-  ensure-have-xmls
+  ensure-have-xml
   ./list-packages
 elif [ "$1 = "create-barebones-sdk" ]; then
   FOLDER="$2"
@@ -60,13 +86,14 @@ elif [ "$1" = "set-sdk" ]; then
   non-null "$SDK"
   must-exist folder "$SDK"
   must-exist file "$SDK/tools/android"
-  ./set-sdk "$SDK"
+  echo -n "$SDK" > .offdroid-sdk-folder
 elif [ "$1" = "select-packages" ]; then 
   node ./server.js 8080 only-select &
   ensure-sdk-set
   ./launch-android
   curl -s 127.0.0.1:8080/?close-server
 elif [ "$1" = "add-source" ]; then
+  create-sources
   SOURCE="$2"
   non-null "$SOURCE"
   NAME=""
@@ -74,17 +101,23 @@ elif [ "$1" = "add-source" ]; then
     NAME="$3"
     non-null "$NAME"
   fi
-  ./add-source "$SOURCE" "$NAME"
+  node source.js add "$SOURCE" "$NAME" > .sources
 elif [ "$1" = "list-sources" ]; then
   cat .sources
 elif [ "$1" = "rm-source" ]; then
   non-null "$2"
-  ./rm-source "$2"
+  node source.js rm "$2" > .sources
+elif [ "$1" = "source" ]; then
+  non-null "$2"
+  node source.js get "$2"
 elif [ "$1" = "launch-manager" ]; then
   node ./server.js 8080 &
   ./launch-android      
   curl -s 127.0.0.1:8080/?close-server
+elif [ "$1" = "latest-tool" ]; then
+  node get-addon.js tool .offdroid-xml/.urlmap .offdroid-xml/.filemap
 else
   echo "Unknown command: $1" 1>&2
   exit 1
 fi
+

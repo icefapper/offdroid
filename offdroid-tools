@@ -1,0 +1,19 @@
+fetch-xml-files
+extract-packages-file-urls
+create-sdk
+select-components-to-download
+run-manager
+launch-package-server
+
+ node server.js 8080 --select-mode --source-lists ./xml-files/
+
+./fetch-xmls
+./list-packages
+./create-barebones-sdk [SOURCE-ARCHIVE] [FOLDER]
+./set-sdk [FOLDER]
+./launch-android
+./latest-tool-archive
+
+./server.js PORT [only-select]
+./list-urls.js repo|addon|tool
+

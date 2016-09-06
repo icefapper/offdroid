@@ -1,0 +1,5 @@
+#!/bin/bash
+ 
+ node get-addons.js repo .offdroid-xml/.offdroid-urlmap \
+                         .offdroid-xml/.offdroid-filemap > .all-package-urls
+

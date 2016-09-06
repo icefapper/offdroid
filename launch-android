@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ -f ".offdroid-sdk-folder" ]; then
+  SDK="$(cat ".offdroid-sdk-folder")"
+  "$SDK/tools/android"
+else
+   echo "android sdk folder not set; please set it (possibly via either 'offdroid create-barebones-sdk <tools-archive-or-folder>' or 'offdroid set-sdk <an-existing-folder-where-sdk-resides>') and try again" 1>&2
+   exit 1
+fi 

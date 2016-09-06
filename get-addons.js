@@ -71,6 +71,7 @@ function repo(urlList, fileList) {
   for (hash in urlHashmap) { one_repo(urlHashmap[hash], fileHashmap[hash]); }
 }
 
+var tool_nodes = [];
 function one_repo(url, fileName) {
 //console.error("EXTRACTING <"+url+">");
   var xml = new xmlparser();
@@ -93,6 +94,10 @@ function one_repo(url, fileName) {
 //  console.error("    <"+u+">");
 
     hash[chk] = { u: u, n: n };
+  };
+
+  xml.listeners['sdk:tool'] = function(n) {
+    tool_urls.push(n);
   };
 
   xml.parseFile(fileName);
@@ -121,6 +126,13 @@ function addons_list(url, fileName) {
   xml.parseFile(fileName);
 }
       
+function findLatestTool() {
+  var e = 0;
+  while (e < tool_nodes) {
+    console.log(tool_nodes[e++]);
+  }
+}
+
 if (m === "repo") {
   extract(repo);
   var total = 0; 
@@ -138,6 +150,7 @@ if (m === "repo") {
   }
   
   console.log("#TOTAL", total, "bytes" );
+  findLatestTool();
 }
 
 else if( m === "addon")

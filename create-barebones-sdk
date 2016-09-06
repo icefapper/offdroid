@@ -1,0 +1,26 @@
+#!/bin/bash
+TOOLS_ARCHIVE_OR_DIR="$1"
+FOLDER="$2"
+
+if [ -e "$TOOLS_ARCHIVE_OR_DIR" ]; then
+   if [ -d "$FOLDER" ]; then
+     if ./nonempty "$FOLDER"; then
+       echo "sdk dir exists, but is not empty: $FOLDER" 1>&2
+       exit 1
+     fi
+   elif [ -e "$FOLDER" ]; then
+       echo "sdk path exists, but is not a directory: $FOLDER" 1>&2
+       exit 2
+   else
+       mkdir -p "$FOLDER"
+   fi
+
+   if [ -d "$TOOLS_ARCHIVE_OR_DIR" ]; then
+     cp -r "$TOOLS_ARCHIVE_OR_DIR" "$FOLDER"
+   else
+     unzip -d "$FOLDER" "$TOOLS_ARCCHIVE_OR_DIR"
+   fi
+else
+   echo "file not found: $TOOLS_ARCHIVE_OR_DIRECTORY" 1>&2
+   exit 5
+fi
