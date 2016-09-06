@@ -5,4 +5,5 @@ awk '{
   } 
   else if ( $0 == "#LATEST-TOOL") {
      latestTool = 1
-  }' < .all-urls
+  }
+}' < .all-urls

@@ -2,7 +2,8 @@ var e = 2,
     list = process.argv,
     fs = require('fs'),
     port = 8080,
-    urlList = {};
+    url2hash = {},
+    hash2file = {};
 
 if (e < list.length) {
   var l = parseInt(list[e++]);
@@ -10,76 +11,118 @@ if (e < list.length) {
     port = l;
 }
 
+var listOnly = false,
+    selected = null;
+
+if (e < list.length && list[e] === "list-only") { 
+  listOnly = !false;
+  selected = [];
+}
+
 var url = require('url');
 
-if (e < list.length) {
-  var urlListFile = list[e++]; 
-  var basePath = "";
-  var n = urlListFile.lastIndexOf('/');
-  if ( n >= 0 )
-    basePath = urlListFile.substring(0, n);
+var urlmap = listOnly ? '.offdroid-xml/.offdroid-urlmap' : '.all-urls'; 
 
-  var nameMap = fs.readFileSync(urlListFile).toString().split('\n').forEach(
-     function(line) {
-        var match = line.match(/^\s*([0-9]+)\s+([^\s]*)\s*$/);
+var urlIsTool = false;
+fs.readFileSync(urlmap)
+  .toString()
+  .split('\n')
+  .forEach( function(line) {
+        if (line === "#LATEST-TOOL")
+          urlIsTool = !false;
+
+        if (!line || line.charAt(0) === '#' )
+          return;
+
+        if (urlIsTool) return;
+
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)$/);
         if (!match) {
-          console.log(line, "NOT MATCHING");
+          console.error("invalid <hash url>: <"+line+">");
           return;
         }
-        else 
-          console.log("URL", match[2], "FILE", match[1] );
 
         var u = url.parse(match[2]);
-        urlList[u. path] = basePath + '/' + match[1];
-        console.log("<"+u.path+">: [" + urlList[u.path]+"]");
-     }
-  );
-}
- 
+        url2hash[u.path] = match[1];
+});
+
 var has = {}.hasOwnProperty;
+var sources = listOnly ? ['.offdroid-xml'] : fs.readFileSync('.sources')
+  .toString()
+  .split('\n');
 
-var fallBackFolder = "";
-if (e < list.length) {
-  fallBackFolder = list[e++];
-  if (fallBackFolder.charAt(fallBackFolder.length-1) === '/')
-    fallBackFolder = fallBackFolder.substring(0, fallBackFolder.length-1);
-}
+sources.forEach( function(sourceFolder) {
+     if (!sourceFolder) return;
+     if (sourceFolder.charAt(0) === '#') return;
 
-function resolve(requestedURL) {
-  var u = url.parse(requestedURL);
-  switch (u.hostname) {
+     if (sourceFolder.charAt(sourceFolder.length-1) === '/')
+         sourceFolder = sourceFolder.substring(0, sourceFolder.length-1);
+   
+     var filemap = sourceFolder + '/.offdroid-filemap';
+     var filemapContents = "";
+
+     try {
+        filemapContents = fs.readFileSync(filemap).toString();
+     }
+     catch (error) {
+        console.error("error reading <"+filemap+">:\n" + error.toString());
+     }     
+
+     filemapContents.split('\n').forEach(function(line) {
+        if (!line || line.charAt(0) === '#' ) return;
+
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)$/);
+        if (!match) {
+          console.error('Filemap: <'+filemap+'> has invalid <hash file> line: <'+line+'>');
+          return;
+        }
+
+        var hash = match[1], file = match[2];
+        hash2file[hash] = file;
+     });
+});  
+
+function toHash(request) {
+  switch (request.headers.host) {
      case 'dl.google.com':
      case 'dl-ssl.google.com':
         break;
      
      default:
-        console.log("UNKNOWN HOST FOR <" + requestedURL + ">:" + u.hostname);
         return "";
   } 
 
-  var file = u.path
-  if (has.call(urlList, file))
-    return urlList[file];
+  var urlPath = url.parse(request.url).path;
 
-  console.log("COULD NOT LOCATE PATH " + file + " IN MAIN; LOOKING IN FALLBACK");
-
-  if (fallBackFolder !== "" )
-    return fallBackFolder+'/'+file;
+  if (has.call(url2hash, urlPath))
+    return url2hash[urlPath];
 
   return "";
 }
-  
-require('http').createServer(function(request, response) {
-  if (request.url === '/?close-server' ) process.exit(1);
 
-  var fileName = resolve(request.url);
-  if (fileName === "" ) {
-    console.log("NO FILE FOR: <" + request.url + ">" );
+require('http').createServer(function(request, response) {
+  if (request.url === '/?close-server' ) {
+     if (listOnly) {
+       var e = 0;
+       while(e < selected.length) {
+          response.write (selected[e]+'\n');
+          e++ ;
+       }
+
+       response.end();
+     }
+
+     process.exit(0);
+  }
+
+  var fileHash = toHash(request);
+  if (fileHash === "" ) {
+    if ( listOnly ) selected.push(request.url);
     response.writeHead(404);
     response.end();
   }
   else {
-    try {
+      var fileName = hash2file[fileHash];
       var fileStream = fs.createReadStream(fileName);
     
       fileStream.on('data', function(bytes) { 
@@ -87,20 +130,14 @@ require('http').createServer(function(request, response) {
       });
     
       fileStream.on('error', function(error) {
-           console.log("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString());
+           console.error("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString());
            response.writeHead(404);
            response.end();
       }) ; 
       fileStream.on('close', function() {
-         console.log('DONE SERVING', request.url);
          response.end();
       });
 
-    }
-    catch(e) {
-       console.log("ERROR SERVING FILE: <"+fileName+">", e.toString());
-    }
   }
 
-}).listen(8080);
-
+}).listen(port);

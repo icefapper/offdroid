@@ -20,12 +20,6 @@ function extract(func) {
 
 function repo(urlList, fileList) {
   var urlHashmap = {};
-
-  var base = "";
-  var baseIndex = fileList.lastIndexOf('/');
-  if (baseIndex > 0)
-    base = fileList.substring(0, baseIndex);
- 
   var fileHashmap = {};
   fs.readFileSync(fileList).toString().split('\n').forEach(function(item) {
     if (!item) {
@@ -37,7 +31,7 @@ function repo(urlList, fileList) {
 
     //console.error("FILEITEM", item);
     item = item.match(/^\s*([a-f0-9A-F]{40})\s+(.*)\s*$/);
-    fileHashmap[item[1]] = base + '/' + item[2];
+    fileHashmap[item[1]] = item[2];
   });
   
   fs.readFileSync(urlList).toString().split('\n').forEach(function(item) {

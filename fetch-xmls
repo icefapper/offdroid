@@ -1,9 +1,18 @@
 #!/bin/bash
 
+non-empty() {
+  for FILE in $(ls -a "$1"); do
+    if [ "$FILE" = "." ]; then continue; 
+    elif [ "$FILE" = ".." ]; then continue;
+    else 
+      return 0
+    fi
+  done
+}
 
 XML_DIR=".offdroid-xml"
 if [ -d "$XML_DIR" ]; then
-  if ./non-empty "$XML_DIR"; then
+  if non-empty "$XML_DIR"; then
     echo "XML directory must be empty; please empty the ./.offdroid-xml directory and try again" 1>&2
     exit 1
   fi
@@ -15,8 +24,8 @@ else
 fi
 
 PROXY=""
-if [ "$2" = "through" ]; then
-  PROXY="$3"
+if [ "$1" = "through" ]; then
+  PROXY="$2"
 fi
 
 ROOT="http://dl.google.com/android/repository"
@@ -32,7 +41,7 @@ get-and-save() {
   DEST="$2"
   curl="curl"
   SRC=$1
-  if [ -n $PROXY ]; then
+  if [ -n "$PROXY" ]; then
     curl="curl -x $PROXY"
   fi
 
@@ -45,7 +54,7 @@ get-and-save() {
     if [ $? -ne 0 ]; then
       DL=$[$DL+1]
       echo "<$HASH> $SRC" 1>&2
-      echo "$HASH $DEST" >> "$XML_FILEMAP"
+      echo "$HASH $(readlink -f "$DEST")" >> "$XML_FILEMAP"
       echo "$HASH $SRC" >> "$XML_URLMAP"
       HASHLIST="$HASHLIST $HASH"
     else
@@ -108,7 +117,7 @@ while get-and-save "$URL" "$SAVEDIR"; do
   SAVEDIR="$XML_DIR/$DL"
 done
 
-ADDON_URLS=$(node get-addons.js addon $XML_ADDONLIST_FILE_NAMES)
+ADDON_URLS=$(node $OFFDROID/get-addons.js addon $XML_ADDONLIST_FILE_NAMES)
 for ADDON in $ADDON_URLS; do
   if [ -n "$XML_REPO_FILE_NAMES" ]; then
     XML_REPO_NAMES="$XML_REPO_FILE_NAMES "

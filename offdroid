@@ -59,24 +59,37 @@ ensure-sdk-set() {
      fi 
 }
 
+create-sources() {
+  if [ -e .sources ]; then
+    return
+  else
+    echo -n > .sources
+  fi
+}
+
 non-null "$1"
 
+################offdroid resume ######################
+if [ "$1" = "resume" ]; then
+  export OFFDROID=`pwd`
+  export PATH="$PATH:$OFFDROID"
+
 ############### offdroid init ####################
-if [ "$1" = "init" ]; then
-  ./init
+elif [ "$1" = "init" ]; then
+  $OFFDROID/init
 
 ############## offdroid fetch-xmls ###############
 elif [ "$1" = "fetch-xmls" ]; then
   ensure-init
-  ./fetch-xmls
+  shift
+  $OFFDROID/fetch-xmls $@
 
 ############# offdroid list-packages #############
 elif [ "$1" = "list-packages" ]; then
-  ensure-have-xml
-  node get-addons.js repo .offdroid-xml/.urlmap .offdroid-xml/.filemap > .all-urls
+  node $OFFDROID/get-addons.js repo .offdroid-xml/.offdroid-urlmap .offdroid-xml/.offdroid-filemap > .all-urls
 
 ########## offdroid create-barebones-sdk #########
-elif [ "$1 = "create-barebones-sdk" ]; then
+elif [ "$1" = "create-barebones-sdk" ]; then
   FOLDER="$2"
   non-null "$FOLDER"
   non-existent "$FOLDER"
@@ -85,10 +98,11 @@ elif [ "$1 = "create-barebones-sdk" ]; then
     SOURCE="$4"
     non-null "$SOURCE"
   else
-    SOURCE="$(./get-latest-tool-zip)"
+    echo "please peovide the tools archive/director to install" 1>&2
+    exit 2
   fi
-  ./create-barebones-sdk "$SOURCE" "$FOLDER"
-  ./offdroid set-sdk "$FOLDER"
+  $OFFDROID/create-barebones-sdk "$SOURCE" "$FOLDER"
+  $OFFDROID/offdroid set-sdk "$FOLDER"
 
 ################## offdroid set-sdk #############
 elif [ "$1" = "set-sdk" ]; then
@@ -100,9 +114,9 @@ elif [ "$1" = "set-sdk" ]; then
 
 ############# offdroid select-packages ##########
 elif [ "$1" = "select-packages" ]; then 
-  node ./server.js 8080 only-select &
+  node $OFFDROID/server.js 8080 list-only &
   ensure-sdk-set
-  ./launch-android
+  $OFFDROID/launch-android
   curl -s "127.0.0.1:8080/?close-server" > .selected-packages
 
 ############# offdroid add-source ###############
@@ -114,24 +128,24 @@ elif [ "$1" = "add-source" ]; then
     echo "already in source-list <$SOURCE>" 1>&2
   else
     echo "$SOURCE" >> .sources
-
+  fi
 ############# offdroid list-sources ##############
 elif [ "$1" = "list-sources" ]; then
   cat .sources
 
 ############# offdroid launch-manager ############
 elif [ "$1" = "launch-manager" ]; then
-  node ./server.js 8080 &
-  ./launch-android      
+  node $OFFDROID/server.js 8080 &
+  $OFFDROID/launch-android      
   curl -s "127.0.0.1:8080/?close-server" > /dev/null
 
 ############# offdroid latest-tool ###############
 elif [ "$1" = "latest-tool" ]; then
   if [ -e .all-urls ]; then
-    ./latest-tool
+    $OFFDROID/latest-tool
   else
-    node get-addon.js .offdroid-xml/.urlmap .offdroid-xml/.filemap > .all-urls
-    ./latest-tool
+    $OFFDROID/offdroid list-packages
+    $OFFDROID/latest-tool
   fi
 
 else
