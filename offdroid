@@ -123,7 +123,7 @@ elif [ "$1" = "list-sources" ]; then
 elif [ "$1" = "launch-manager" ]; then
   node ./server.js 8080 &
   ./launch-android      
-  curl -s "127.0.0.1:8080/?close-server"
+  curl -s "127.0.0.1:8080/?close-server" > /dev/null
 
 ############# offdroid latest-tool ###############
 elif [ "$1" = "latest-tool" ]; then

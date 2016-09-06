@@ -1,0 +1,16 @@
+#!/bin/bash
+FOLDER="$1"
+if [ -z "$FOLDER" ];then
+  FOLDER="."
+fi
+
+HASH_MAP="$FOLDER/.offdroid-filemap"
+
+if [ -e "$HASH_MAP" ]; then
+  echo "filemap <$HASH_MAP> exists in <$FOLDER>; quitting." 1>&2
+  exit 1
+fi
+
+find `pwd` | xargs sha1sum | tee "$HASH_MAP" 1>&2
+echo -n "$HASH_MAP"
+

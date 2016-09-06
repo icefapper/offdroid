@@ -1,0 +1,8 @@
+#!/bin/bash
+awk '{ 
+  if ( latestTool ) {
+    print $0 
+  } 
+  else if ( $0 == "#LATEST-TOOL") {
+     latestTool = 1
+  }' < .all-urls
