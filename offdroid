@@ -1,0 +1,90 @@
+#!/bin/bash
+
+non-null() {
+  if [ -n "$1" ]; then
+    return
+  fi
+  echo "NULL ARGUMENT" 1>&2
+  exit 2
+}
+
+must-exist() {
+  if [ "$1" = "folder" ]; then
+    if [ -d "$2" ]; then
+      return
+    else
+      echo "not a folder: <$2>" 1>&2
+      exit 5
+    fi
+  fi
+
+  if [ -e "$2" ]; then
+    return
+  else
+    echo "file not found: <$2>" 1>&2
+    exit 12
+  fi
+}
+
+non-existent() {
+  if [ -e "$1" ]; then
+    echo "File exists: <$1>" 1>&2
+    exit 4
+  fi
+}
+    
+non-null "$1"
+if [ "$1" = "init" ]; then
+  ./init
+elif [ "$1" = "fetch-xmls" ]; then
+  ensure-init
+  fetch-xmls
+elif [ "$1" = "list-packages" ]; then
+  ensure-have-xmls
+  ./list-packages
+elif [ "$1 = "create-barebones-sdk" ]; then
+  FOLDER="$2"
+  non-null "$FOLDER"
+  non-existent "$FOLDER"
+  SOURCE=""
+  if [ "$3" = "from" ]; then
+    SOURCE="$4"
+    non-null "$SOURCE"
+  else
+    SOURCE="$(./get-latest-tool-zip)"
+  fi
+  ./create-barebones-sdk "$SOURCE" "$FOLDER"
+  ./offdroid set-sdk "$FOLDER"
+elif [ "$1" = "set-sdk" ]; then
+  SDK="$2"
+  non-null "$SDK"
+  must-exist folder "$SDK"
+  must-exist file "$SDK/tools/android"
+  ./set-sdk "$SDK"
+elif [ "$1" = "select-packages" ]; then 
+  node ./server.js 8080 only-select &
+  ensure-sdk-set
+  ./launch-android
+  curl -s 127.0.0.1:8080/?close-server
+elif [ "$1" = "add-source" ]; then
+  SOURCE="$2"
+  non-null "$SOURCE"
+  NAME=""
+  if [ "$2" = "as" ]; then
+    NAME="$3"
+    non-null "$NAME"
+  fi
+  ./add-source "$SOURCE" "$NAME"
+elif [ "$1" = "list-sources" ]; then
+  cat .sources
+elif [ "$1" = "rm-source" ]; then
+  non-null "$2"
+  ./rm-source "$2"
+elif [ "$1" = "launch-manager" ]; then
+  node ./server.js 8080 &
+  ./launch-android      
+  curl -s 127.0.0.1:8080/?close-server
+else
+  echo "Unknown command: $1" 1>&2
+  exit 1
+fi
