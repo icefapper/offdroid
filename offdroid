@@ -60,14 +60,22 @@ ensure-sdk-set() {
 }
 
 non-null "$1"
+
+############### offdroid init ####################
 if [ "$1" = "init" ]; then
   ./init
+
+############## offdroid fetch-xmls ###############
 elif [ "$1" = "fetch-xmls" ]; then
   ensure-init
   ./fetch-xmls
+
+############# offdroid list-packages #############
 elif [ "$1" = "list-packages" ]; then
   ensure-have-xml
-  ./list-packages
+  node get-addons.js repo .offdroid-xml/.urlmap .offdroid-xml/.filemap > .all-urls
+
+########## offdroid create-barebones-sdk #########
 elif [ "$1 = "create-barebones-sdk" ]; then
   FOLDER="$2"
   non-null "$FOLDER"
@@ -81,41 +89,51 @@ elif [ "$1 = "create-barebones-sdk" ]; then
   fi
   ./create-barebones-sdk "$SOURCE" "$FOLDER"
   ./offdroid set-sdk "$FOLDER"
+
+################## offdroid set-sdk #############
 elif [ "$1" = "set-sdk" ]; then
   SDK="$2"
   non-null "$SDK"
   must-exist folder "$SDK"
   must-exist file "$SDK/tools/android"
   echo -n "$SDK" > .offdroid-sdk-folder
+
+############# offdroid select-packages ##########
 elif [ "$1" = "select-packages" ]; then 
   node ./server.js 8080 only-select &
   ensure-sdk-set
   ./launch-android
-  curl -s 127.0.0.1:8080/?close-server
+  curl -s "127.0.0.1:8080/?close-server" > .selected-packages
+
+############# offdroid add-source ###############
 elif [ "$1" = "add-source" ]; then
   create-sources
   SOURCE="$2"
   non-null "$SOURCE"
-  NAME=""
-  if [ "$2" = "as" ]; then
-    NAME="$3"
-    non-null "$NAME"
-  fi
-  node source.js add "$SOURCE" "$NAME" > .sources
+  if grep -F "$SOURCE" < .sources; then
+    echo "already in source-list <$SOURCE>" 1>&2
+  else
+    echo "$SOURCE" >> .sources
+
+############# offdroid list-sources ##############
 elif [ "$1" = "list-sources" ]; then
   cat .sources
-elif [ "$1" = "rm-source" ]; then
-  non-null "$2"
-  node source.js rm "$2" > .sources
-elif [ "$1" = "source" ]; then
-  non-null "$2"
-  node source.js get "$2"
+
+############# offdroid launch-manager ############
 elif [ "$1" = "launch-manager" ]; then
   node ./server.js 8080 &
   ./launch-android      
-  curl -s 127.0.0.1:8080/?close-server
+  curl -s "127.0.0.1:8080/?close-server"
+
+############# offdroid latest-tool ###############
 elif [ "$1" = "latest-tool" ]; then
-  node get-addon.js tool .offdroid-xml/.urlmap .offdroid-xml/.filemap
+  if [ -e .all-urls ]; then
+    ./latest-tool
+  else
+    node get-addon.js .offdroid-xml/.urlmap .offdroid-xml/.filemap > .all-urls
+    ./latest-tool
+  fi
+
 else
   echo "Unknown command: $1" 1>&2
   exit 1
