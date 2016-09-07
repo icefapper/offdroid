@@ -64,19 +64,19 @@ _NOTE 2: OFFDROID variable is crucial for offdroid to run properly; simply appen
 The main, and indeed the only, command Offdroid has is the `offdroid` command. It is an umbrella command, like `git` and `apt-get`, exposing different functionality through various subcommands it provides. Below is the list of all subcommands `offdroid` provides, along with a description of what they do.
  
 * `offdroid init`
-** initialize an offdroid workspace. An offdroid workspace is the folder you run all other offdroid commands from, and is where all offdroid commands you issue read data from or write data to. 
+    * initialize an offdroid workspace. An offdroid workspace is the folder you run all other offdroid commands from, and is where all offdroid commands you issue read data from or write data to. 
 * `offdroid fetch-xmls [through <PROXY>]`
-** fetch the xmls containing sdk component descriptors, optionally through a proxy
+    * fetch the xmls containing sdk component descriptors, optionally through a proxy
 * `offdroid list-packages`
-** extract certain component details from the xmls obtained through `offdroid fetch-xmls`; the content server later uses the output produced by this command to resolve url addresses to local file paths.
+    * extract certain component details from the xmls obtained through `offdroid fetch-xmls`; the content server later uses the output produced by this command to resolve url addresses to local file paths.
 * `offdroid latest-tool`
-** outputs the url(s) of the latest android 'tools' archive, the archive containing `android` executable; if you have decided to manually create an sdk (as opposed to downloading a pre-bundled archive) you will have to download the file this url points to, create a new folder, and extract this file under the folder you have created; the very folder you extracted the 'tools' archive in will be your sdk root folder; more about it on 'A Note About the SDK', below. 
+    * outputs the url(s) of the latest android 'tools' archive, the archive containing `android` executable; if you have decided to manually create an sdk (as opposed to downloading a pre-bundled archive) you will have to download the file this url points to, create a new folder, and extract this file under the folder you have created; the very folder you extracted the 'tools' archive in will be your sdk root folder; more about it on 'A Note About the SDK', below. 
 * `offdroid set-sdk [FOLDER]`
-** set the sdk the current offdroid workspace is going to use
+    * set the sdk the current offdroid workspace is going to use
 * `offdroid add-source-folder [FOLDER]`
-** adds a new source-folder to the current offdroid workspace's list of source folders. A source folder is a folder containing the sdk components you have downloaded.
+    * adds a new source-folder to the current offdroid workspace's list of source folders. A source folder is a folder containing the sdk components you have downloaded.
 * `offdroid launch-manager`
-** launches the local server, and then the sdk manager. This is the command all other offdroid commands labor for. 
+    * launches the local server, and then the sdk manager. This is the command all other offdroid commands labor for. 
 
 ##A Note About the SDK
 As you know, `android` is traditionally used to manage the sdk folder's contents.
@@ -86,7 +86,7 @@ mkdir my-offdroid-workspace && cd my-offdroid-workspace
 offdroid init
 offdroid fetch-xmls
 offdroid latest-tool
-```sh
+```
 
 This might output more than one url; you should choose the one whose prefix matches the name of your operating system.
 
@@ -136,12 +136,12 @@ offdroid set-sdk ~/my-android-sdk
 ```sh
 ~/my-android-sdk/tools/android -v
 ```
-** In the sdk manager:
-   go to Tools > Options
-   Under 'Proxy Settings', set 'HTTP Proxy Server' to 127.0.0.1, and 'HTTP Proxy Port' to 8080
-   uncheck 'Use download cache', as we must not use the cache
-   check 'Force https://... sources to be fetched using http://...';
-   exit the sdk manager
+   * In the sdk manager:
+     * go to Tools > Options
+     * Under 'Proxy Settings', set 'HTTP Proxy Server' to 127.0.0.1, and 'HTTP Proxy Port' to 8080
+     * uncheck 'Use download cache', as we must not use the cache
+     * check 'Force https://... sources to be fetched using http://...';
+     * exit the sdk manager
 
 * select the components you want to add to your sdk. this stage launches the actual manager; you select whatever you would like to install, and then follow the installation intructions as if you are actually installing the components you have chosen. when the "installation" is finished (it will actually take a few seconds, as all the downloads will fail immediately), close the sdk manager.
 ```sh
