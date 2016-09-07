@@ -33,6 +33,8 @@ Offdroid contains all the tools to set up such a localhost server. So let's lear
 
 #Setup and Usage
 ##Offdroid dependencies
+** Offdroid works best on unix-like operatin systems; if you are using a non-unix-like operating system, you should install cygwin first. **
+
 Offdroid makes extensive use of node.js; you must install it before being able to use offdroid.
 Offdroid also uses `node-expat` node package; assuming you have npm, you could install node-expat like so (if you haven't already):
 ```sh
@@ -59,7 +61,7 @@ I would recommend you add the above lines to your .bashrc, otherwise you have to
 
 _NOTE 1: replace `path/to/offdroid` with the actual path to the folder offdroid resides in._
 
-_NOTE 2: OFFDROID variable is crucial for offdroid to run properly; simply appending the `PATH` variable with the path to offdroid's folder will not work._   
+_NOTE 2: the `OFFDROID` shell variable is crucial for offdroid to run properly; simply appending the `PATH` variable with the path to offdroid's folder will not work._   
 
 ##Commands
 The main, and indeed the only, command Offdroid has is the `offdroid` command. It is an umbrella command, like `git` and `apt-get`, exposing different functionality through various subcommands it provides. Below is the list of all subcommands `offdroid` provides, along with a description of what they do.
