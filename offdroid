@@ -67,12 +67,18 @@ create-sources() {
   fi
 }
 
+usage() {
+  echo -e "$1" 1>&2
+  exit 1
+}
+ 
 non-null "$1"
 
-################offdroid resume ######################
-if [ "$1" = "resume" ]; then
+################offdroid cd ######################
+if [ "$1" = "cd" ]; then
   export OFFDROID=`pwd`
   export PATH="$PATH:$OFFDROID"
+  cd "$2"
 
 ############### offdroid init ####################
 elif [ "$1" = "init" ]; then
@@ -127,7 +133,22 @@ elif [ "$1" = "add-source" ]; then
   if grep -F "$SOURCE" < .sources; then
     echo "already in source-list <$SOURCE>" 1>&2
   else
-    echo "$SOURCE" >> .sources
+    if [ -e "$SOURCE/.offdroid-filemap" ]; then
+       echo "$SOURCE" >> .sources
+       echo "SOURCE ADDED <$SOURCE>" 1>&2
+    else
+       echo "No filemap found in <$SOURCE>; create one? (y/n) "
+       read PROMPT
+       if [ "$PROMPT" = "y" ]; then
+          echo "Creating filemap for <$SOURCE>; this might take several minutes, based on the folder's size" 1>&2
+          $OFFDROID/create-filemap "$SOURCE"
+          echo "$SOURCE" >> .sources
+          echo "SOURCE ADDED <$SOURCE>" 1>&2
+       else
+          echo "SOURCE WAS NOT ADDED" 1>&2
+          exit 1
+       fi
+    fi 
   fi
 ############# offdroid list-sources ##############
 elif [ "$1" = "list-sources" ]; then

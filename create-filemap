@@ -11,6 +11,6 @@ if [ -e "$HASH_MAP" ]; then
   exit 1
 fi
 
-find `pwd` | xargs sha1sum | tee "$HASH_MAP" 1>&2
-echo -n "$HASH_MAP"
+find "$(readlink -f "$FOLDER")" | xargs sha1sum | tee "$HASH_MAP" 1>&2
+echo "$HASH_MAP"
 
