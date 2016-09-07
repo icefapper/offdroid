@@ -58,6 +58,7 @@ After obtaining offdroid, you must set OFFDROID shell variable, and tweak the ex
 I would recommend you add the above lines to your .bashrc, otherwise you have to type them in each time you use offdroid. 
 
 _NOTE 1: replace `path/to/offdroid` with the actual path to the folder offdroid resides in._
+
 _NOTE 2: OFFDROID variable is crucial for offdroid to run properly; simply appending the `PATH` variable with the path to offdroid's folder will not work._   
 
 ##Commands
@@ -94,7 +95,7 @@ After downloading the 'tools' archive, you should extract in a folder -- prefera
 
 If you find the above process cumbersome (I didn't), you coul well go to https://developer.android.com, and download the pre-bundled sdk folder suiting you operating system. Its name is like so: "android-sdk_r<version>-<os>.tgz". The archive contains the sdk root itself; extracting gives you an sdk folder out of the box.
 
-#A Complete Example of Usage
+#A Complete Example
 Below is an illustartion of how offdroid is actually used; it assumes no sdk folder has been set up yet.
 
 * creating workspace folder:
