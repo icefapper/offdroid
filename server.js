@@ -24,10 +24,15 @@ var url = require('url');
 var urlmap = listOnly ? '.offdroid-xml/.offdroid-urlmap' : '.all-urls'; 
 
 var urlIsTool = false;
-fs.readFileSync(urlmap)
+var urlmap = fs.readFileSync('.offdroid-xml/.offdroid-urlmap')
   .toString()
-  .split('\n')
-  .forEach( function(line) {
+  .split('\n');
+
+if (! listOnly ) 
+  urlmap = urlmap.concat(
+     fs.readFileSync('.all-urls').toString().split('\n') );
+
+urlmap .forEach( function(line) {
         if (line === "#LATEST-TOOL")
           urlIsTool = !false;
 
@@ -36,7 +41,7 @@ fs.readFileSync(urlmap)
 
         if (urlIsTool) return;
 
-        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)$/);
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*$/);
         if (!match) {
           console.error("invalid <hash url>: <"+line+">");
           return;
@@ -47,9 +52,13 @@ fs.readFileSync(urlmap)
 });
 
 var has = {}.hasOwnProperty;
-var sources = listOnly ? ['.offdroid-xml'] : fs.readFileSync('.sources')
-  .toString()
-  .split('\n');
+var sources =  ['.offdroid-xml'];
+
+if (! listOnly )
+  sources = sources.concat(  fs.readFileSync('.sources')
+    .toString()
+    .split('\n')
+  );
 
 sources.forEach( function(sourceFolder) {
      if (!sourceFolder) return;
@@ -71,7 +80,7 @@ sources.forEach( function(sourceFolder) {
      filemapContents.split('\n').forEach(function(line) {
         if (!line || line.charAt(0) === '#' ) return;
 
-        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)$/);
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*$/);
         if (!match) {
           console.error('Filemap: <'+filemap+'> has invalid <hash file> line: <'+line+'>');
           return;
@@ -100,7 +109,11 @@ function toHash(request) {
   return "";
 }
 
-require('http').createServer(function(request, response) {
+console.error("URL Map:\n", url2hash );
+console.error("File Map:\n", hash2file);
+
+require('http').createServer( function(request, response) {
+  console.error("REQ <"+request.url+">");
   if (request.url === '/?close-server' ) {
      if (listOnly) {
        var e = 0;
@@ -118,11 +131,13 @@ require('http').createServer(function(request, response) {
   var fileHash = toHash(request);
   if (fileHash === "" ) {
     if ( listOnly ) selected.push(request.url);
+    console.error("NOT FOUND\n");
     response.writeHead(404);
     response.end();
   }
   else {
       var fileName = hash2file[fileHash];
+      console.log( "FOUND AS FILE " + fileName + "; SERVING...");
       var fileStream = fs.createReadStream(fileName);
     
       fileStream.on('data', function(bytes) { 
@@ -130,11 +145,12 @@ require('http').createServer(function(request, response) {
       });
     
       fileStream.on('error', function(error) {
-           console.error("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString());
+           console.error("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString() + "\n" );
            response.writeHead(404);
            response.end();
       }) ; 
       fileStream.on('close', function() {
+         console.log( "DONE SERVING.\n");
          response.end();
       });
 

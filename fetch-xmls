@@ -37,28 +37,36 @@ XML_URLMAP="$XML_DIR/.offdroid-urlmap"
 XML_REPO="repository"
 XML_ADDONLIST="addons_list"
 
+NEXT_ENTRY=""
 get-and-save() {
-  DEST="$2"
+  SAVE="$2"
   curl="curl"
   SRC=$1
   if [ -n "$PROXY" ]; then
     curl="curl -x $PROXY"
   fi
-
-  HASH=$($curl -s $SRC | tee "$DEST" | sha1sum) 
+  
+  echo "GETTING <$SRC>; TO <$SAVE>" 1>&2
+  NEXT_ENTRY=""
+  HASH=$($curl -s $SRC | tee "$SAVE" | sha1sum) 
   RET=$?
 
   if [ $RET -eq 0 ]; then
+    echo "CHECKING DUPLICATES..." 1>&2
     for H in $HASH; do HASH="$H"; break 1; done
     echo "$HASHLIST" | grep -q -F "$HASH"
     if [ $? -ne 0 ]; then
+      echo "FRESH <$HASH>:<$SRC>" 1>&2
       DL=$[$DL+1]
       echo "<$HASH> $SRC" 1>&2
-      echo "$HASH $(readlink -f "$DEST")" >> "$XML_FILEMAP"
+      echo "$HASH $(readlink -f "$SAVE")" >> "$XML_FILEMAP"
       echo "$HASH $SRC" >> "$XML_URLMAP"
       HASHLIST="$HASHLIST $HASH"
+      NEXT_ENTRY="$SRC $SAVE"
+      echo "get-and-save::NEXT_ENTRY <$NEXT_ENTRY>" 1>&2
     else
-      rm $DEST
+      echo "EXISTS: <$HASH>:<$SRC>; HASHLIST: {$HASHLIST}" 1>&2
+      rm "$SAVE"
     fi
   else
     echo "error:$RET $SRC"1>&2
@@ -71,16 +79,17 @@ DL=1
 idx=0
 
 XML_REPO_FILE_NAMES=""
-MAX_REPO=12
 
+MAX_REPO=12
 URL="$ROOT/$XML_REPO.xml"
 SAVEDIR="$XML_DIR/$DL"
 while get-and-save "$URL" "$SAVEDIR"; do
+  echo "NEXT_ENTRY <$NEXT_ENTRY>" 1>&2
   if [ -n "$XML_REPO_FILE_NAMES" ]; then
-    XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES ";
+     XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES "
   fi
 
-  XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES$URL $SAVEDIR"
+  XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES$NEXT_ENTRY"
 
   if [ $idx -eq $MAX_REPO ]; then
     break 1
@@ -92,20 +101,44 @@ while get-and-save "$URL" "$SAVEDIR"; do
   SAVEDIR="$XML_DIR/$DL"
 done
 
+XML_REPO2="repository2"
+idx=0
+MAX_REPO2=2
+URL="$ROOT/$XML_REPO2.xml"
+SAVEDIR="$XML_DIR/$DL"
+while get-and-save "$URL" "$SAVEDIR"; do
+  echo "NEXT_ENTRY <$NEXT_ENTRY>" 1>&2
+  if [ -n "$XML_REPO_FILE_NAMES" ]; then
+     XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES "
+  fi
+
+  XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES$NEXT_ENTRY"
+
+  if [ $idx -eq $MAX_REPO2 ]; then
+    break 1
+  fi
+
+  idx=$[$idx + 1];
+
+  URL="$ROOT/$XML_REPO2-$idx.xml"
+  SAVEDIR="$XML_DIR/$DL"
+done
+
 idx=0
 
 XML_ADDONLIST_FILE_NAMES=""
-MAX_ADDONLIST=2
+MAX_ADDONLIST=5
 
 URL="$ROOT/$XML_ADDONLIST.xml"
 SAVEDIR="$XML_DIR/$DL"
 
-while get-and-save "$URL" "$SAVEDIR"; do
+while get-and-save "$URL" "$SAVEDIR" ; do
+  echo "NEXT_ENTRY <$NEXT_ENTRY>" 1>&2
   if [ -n "$XML_ADDONLIST_FILE_NAMES" ]; then
-    XML_ADDONLIST_FILE_NAMES="$XML_ADDONLIST_FILE_NAMES "
+     XML_ADDONLIST_FILE_NAMES="$XML_ADDONLIST_FILE_NAMES "
   fi
 
-  XML_ADDONLIST_FILE_NAMES="$XML_ADDONLIST_FILE_NAMES$URL $SAVEDIR"
+  XML_ADDONLIST_FILE_NAMES="$XML_ADDONLIST_FILE_NAMES$NEXT_ENTRY"
   
   if [ $idx -eq $MAX_ADDONLIST ]; then
     break 1
@@ -117,6 +150,8 @@ while get-and-save "$URL" "$SAVEDIR"; do
   SAVEDIR="$XML_DIR/$DL"
 done
 
+echo "{REPO: $XML_REPO_FILE_NAMES}" 1>&2
+
 ADDON_URLS=$(node $OFFDROID/get-addons.js addon $XML_ADDONLIST_FILE_NAMES)
 for ADDON in $ADDON_URLS; do
   if [ -n "$XML_REPO_FILE_NAMES" ]; then
@@ -126,4 +161,5 @@ for ADDON in $ADDON_URLS; do
   get-and-save "$ADDON" "$SAVEDIR"
   XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES $ADDON $SAVEDIR"
 done
+
 

@@ -4,6 +4,15 @@ var xmlparser = require('./xml.js').XMLParser,
     m = "";
 
 m = list[i++];
+
+console.error("<ARGUMENTS>")
+var e = i;
+while (e < list.length) {
+  console.error("<"+list[e]+">:", "<"+list[e+1]+">\n");
+  e += 2 ;
+}
+console.error("</ARGUMENTS>\n");
+
 var fs = require('fs');
 
 function extract(func) {
@@ -17,8 +26,27 @@ function extract(func) {
   }
 }
        
+var have = {};
+var listNew = false;
 
 function repo(urlList, fileList) {
+
+  if (listNew )
+    fs.readFileSync('.sources').toString().split('\n').forEach(function(sourceName) {
+     if (!sourceName || sourceName === "") return;
+
+     fs.readFileSync(sourceName + '/' + '.offdroid-filemap').toString().split('\n').forEach(function(line) {
+       if (!line) return;
+       line = line.match(/^([a-f0-9A-F]{40})\s+(.*)\s*$/);
+
+       var hash = line[1], fileName = line[2];
+       if (!have.hasOwnProperty(hash))
+         have[hash] = [fileName];
+
+       else have[hash].push(fileName);
+     });
+  });
+
   var urlHashmap = {};
   var fileHashmap = {};
   fs.readFileSync(fileList).toString().split('\n').forEach(function(item) {
@@ -68,7 +96,7 @@ function one_repo(url, fileName) {
 
     var chk = n.byName['sdk:checksum'] || n.byName['checksum'];
     chk = chk[0].ch[0].ch;
- 
+  
     var u = n.byName['sdk:url'];
     if (!u) u = n.byName['url'];
     u =  u[0].ch[0].ch;
@@ -170,6 +198,11 @@ function revisionCompare(r1, r2) {
          r1.preview - r2.preview;
 }
  
+if (m === "new") {
+  listNew = !false;
+  m = "repo";
+}
+
 if (m === "repo") {
   extract(repo);
   var total = 0; 
@@ -177,7 +210,11 @@ if (m === "repo") {
 
   for( chk in hash) {
     if (hash.hasOwnProperty(chk)) {
-
+       if (listNew && have.hasOwnProperty(chk)) {
+         console.error("SKIPPING <"+chk+">:", have[chk] );
+         continue;
+       }
+ 
        var n = hash[chk].n;
        var len = n.byName['size'] || n.byName['sdk:size'];
        len = parseInt(len[0].ch[0].ch);
@@ -187,14 +224,15 @@ if (m === "repo") {
   }
   
   console.log("#TOTAL", total, "bytes" );
-  var latestTool = findLatestTool().archives, e = 0;
-
-  console.log("#LATEST-TOOL");
-  while (e < latestTool.length) {
-    console.log(hash[latestTool[e].checksum].u);
-    ++e;
-  }
-  
+  if (!listNew) { 
+      var latestTool = findLatestTool().archives, e = 0;
+    
+      console.log("#LATEST-TOOL");
+      while (e < latestTool.length) {
+        console.log(hash[latestTool[e].checksum].u);
+        ++e;
+      }
+  }  
 }
 
 else if( m === "addon")

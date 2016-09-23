@@ -93,6 +93,8 @@ elif [ "$1" = "fetch-xmls" ]; then
 ############# offdroid list-packages #############
 elif [ "$1" = "list-packages" ]; then
   node $OFFDROID/get-addons.js repo .offdroid-xml/.offdroid-urlmap .offdroid-xml/.offdroid-filemap > .all-urls
+  node $OFFDROID/get-addons.js new  .offdroid-xml/.offdroid-urlmap .offdroid-xml/.offdroid-filemap > .new
+  echo "LISTING FINISHED" 1>&2
 
 ########## offdroid create-barebones-sdk #########
 elif [ "$1" = "create-barebones-sdk" ]; then
@@ -125,6 +127,15 @@ elif [ "$1" = "select-packages" ]; then
   $OFFDROID/launch-android
   curl -s "127.0.0.1:8080/?close-server" > .selected-packages
 
+############## offdroid create-filemap ##########
+elif [ "$1" == "create-filemap" ]; then
+  SOURCE="$2"
+  if [ -e "$SOURCE/.offdroid-filemap" ]; then
+     echo "filemap exists for <$SOURCE>"
+  else
+     "$OFFDROID"/create-filemap "$SOURCE"
+  fi
+    
 ############# offdroid add-source ###############
 elif [ "$1" = "add-source" ]; then
   create-sources
