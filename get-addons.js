@@ -32,7 +32,8 @@ var listNew = false;
 function repo(urlList, fileList) {
 
   if (listNew )
-    fs.readFileSync('.sources').toString().split('\n').forEach(function(sourceName) {
+    fs.readFileSync('.sources') // credits go to @leonleeann pointing out that list-packages will fail is called before add-source
+      .toString().split('\n').forEach(function(sourceName) {
      if (!sourceName || sourceName === "") return;
 
      fs.readFileSync(sourceName + '/' + '.offdroid-filemap').toString().split('\n').forEach(function(line) {

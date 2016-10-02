@@ -12,4 +12,5 @@ for FILE in `ls -a`; do
 done
 
 echo > .init
+echo > .sources
      
