@@ -1,4 +1,4 @@
-#A (Brief?) Introduction
+# A (Brief?) Introduction
 _In order to understand what this tool does, I highly recommend you read the following paragraphs. Don't worry, they get more relevant as you approach the end._
 
 Android SDK is, at its core, a plain old folder. Actually, it can can have any name, not necessarily 'Android SDK', 'AndroidSDK', or any other variant thereof. What distinguishes an SDK folder from a non-SDK one is the folder's directory structure and contents: a folder can be an android sdk folder if it has (at the very least) a subfolder named 'tools'. That folder must in turn, contain certain files to in order to be distinguished as an sdk folder by programs like Android Studio, but as far as the folder structure is concerned, having a sub-folder named 'tools' is all an folder needs look like a (bare-bone) sdk folder.
@@ -12,7 +12,7 @@ _(Note: replace <sdk-root> with the name you gave your android sdk folder.)_
 
 `android` is a rather versatile tool whose duties range from updating/installing android sdk to managing your android projects, and beyond. I will soon describe how to actually obtain this executable. But for now, let me tell about the problem that made me create offdroid.
 
-#The Problem
+# The Problem
 As stated above, `android` (which is the SDK manager, among other things) is in charge of finding, downloading, and installing sdk components:
 * "Finding" involves retrieving the list of sdk components from google's servers.
 * "Downloading" is downloading the components you select from the aforementioned list.
@@ -24,15 +24,15 @@ Savvy android users might point out using the "cache" mechanism built into the s
  
 Offdroid's solution is rather different.
 
-#The Solution
+# The Solution
 The sdk manager downloads the things it needs from the internet, possibly through an http proxy. In case the previous sentence looks like a tautology to you, please read its last part again -- "*possibly through an http proxy*".
 
 That's the solution! Creating a localhost proxy that serves the content you have on your local disk, and fooling the sdk manager to connect to the "internet" through this local proxy.
 
 Offdroid contains all the tools to set up such a localhost server. So let's learn how to use it, which is what the next section is for.
 
-#Setup and Usage
-##Offdroid dependencies
+# Setup and Usage
+## Offdroid dependencies
 ** Offdroid works best on unix-like operatin systems; if you are using a non-unix-like operating system, you should install cygwin first. **
 
 Offdroid makes extensive use of node.js; you must install it before being able to use offdroid.
@@ -42,7 +42,7 @@ npm install node-expat -g
 # or if any permission error occurs, 'sudo npm install node-expat -g'
 ```
   
-##Downloading offdroid
+## Downloading offdroid
 To use offdroid, you must first download it ;)
 my favorite way to do so is:
 ```sh
@@ -51,7 +51,7 @@ git clone https://github.com/icefapper/offdroid
 
 Another way would be downloading the zip of the master branch, and extracting it to a folder of your choice.
 
-##Setting up the environment
+## Setting up the environment
 After obtaining offdroid, you must set OFFDROID shell variable, and tweak the existing PATH variable as follows:
 ```sh
  export OFFDROID=path/to/offdroid
@@ -63,7 +63,7 @@ _NOTE 1: replace `path/to/offdroid` with the actual path to the folder offdroid 
 
 _NOTE 2: the `OFFDROID` shell variable is crucial for offdroid to run properly; simply appending the `PATH` variable with the path to offdroid's folder will not work._   
 
-##Commands
+## Commands
 The main, and indeed the only, command Offdroid has is the `offdroid` command. It is an umbrella command, like `git` and `apt-get`, exposing different functionality through various subcommands it provides. Below is the list of all subcommands `offdroid` provides, along with a description of what they do.
  
 * `offdroid init`
@@ -81,7 +81,7 @@ The main, and indeed the only, command Offdroid has is the `offdroid` command. I
 * `offdroid launch-manager`
     * launches the local server, and then the sdk manager. This is the command all other offdroid commands labor for. 
 
-##A Note About the SDK
+## A Note About the SDK
 As you know, `android` is traditionally used to manage the sdk folder's contents.
 But what is the sdk folder? and where can `android` be found? as described in the very beginning of this README, the sdk folder is a plain old folder, in which a 'tools' archive has been extracted. A 'tools' archive is itself a component of android sdk, in the form of a 'zip' archive; this archive is where the `android` executable resides. You could obtain the url for the latest 'tools' archive as simply as below:
 ```sh
@@ -97,7 +97,7 @@ After downloading the 'tools' archive, you should extract in a folder -- prefera
 
 If you find the above process cumbersome (I didn't), you coul well go to https://developer.android.com, and download the pre-bundled sdk folder suiting you operating system. Its name is like so: "android-sdk_r<version>-<os>.tgz". The archive contains the sdk root itself; extracting gives you an sdk folder out of the box.
 
-#A Complete Example
+# A Complete Example
 Below is an illustartion of how offdroid is actually used; it assumes no sdk folder has been set up yet.
 
 * creating workspace folder:
