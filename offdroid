@@ -167,7 +167,10 @@ elif [ "$1" = "list-sources" ]; then
 
 ############# offdroid launch-manager ############
 elif [ "$1" = "launch-server" ]; then
-  sudo node $OFFDROID/server.js 0 | tee -a ".missing[--$(date)--]" 
+  MISSING=".missing[--$(date)--]"
+  rm -i .missing-latest
+  ln -s "$MISSING" .missing-latest
+  sudo node $OFFDROID/server.js 0 | tee -a "$MISSING" 
   #  $OFFDROID/launch-android      
   curl -s "127.0.0.1:8080/?close-server" > /dev/null
 

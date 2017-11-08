@@ -133,8 +133,8 @@ function RUN(kind) {
     var baseName = "";
     if (fileHash !== "" && has.call(hash2file, fileHash)) {
       baseName = fileName = hash2file[fileHash];
-      try { fs.statSync(fileName); fileStream = fs.createReadstream(fileName); console.error('found ['+baseName+'] in ['+fileName+']'); }
-      catch (e) { console.error('no ['+baseName+'] in ['+fileName+']', e); err = e; }
+      try { fs.statSync(fileName); fileStream = fs.createReadStream(fileName); console.error('found ['+baseName+'] in ['+fileName+']'); }
+      catch (e) { console.error('no ['+baseName+'] in ['+fileName+']'); err = e; }
     }
     else {
       console.error(fileHash === "" ? 'NOT IN THE HASHMAP;' : 'NOT IN THE LOCAL;', 'searching ...' );
@@ -143,15 +143,17 @@ function RUN(kind) {
       while (l < list.length) {
         fileName = list[l++] + '/' + baseName;
         try { fs.statSync(fileName); fileStream = fs.createReadStream(fileName); console.error('found ['+baseName+'] in ['+fileName +']'); break; }
-        catch (e) { console.error('no ['+baseName+'] in ['+fileName+']', e); err = e; }
+        catch (e) { console.error('no ['+baseName+'] in ['+fileName+']'); err = e; }
       }
     }
 
     if (fileStream === null) {
-      console.error('search finished; no ['+request.url+']');
-      response.write(404);
-      
+      console.error('search finished; no ['+request.url+']', err);
+      response.writeHead(404 ); response.end();
+
+
       console.log(kind+'://'+request.headers.host+request.url);
+    }
     else {
         console.error('search finished; found ['+request.url+'] in ['+fileName+']; SERVING...' );
 
