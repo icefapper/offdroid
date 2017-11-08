@@ -41,7 +41,7 @@ urlmap .forEach( function(line) {
 
         if (urlIsTool) return;
 
-        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*$/);
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*(?:#.*)?$/);
         if (!match) {
           console.error("invalid <hash url>: <"+line+">");
           return;
@@ -80,7 +80,7 @@ sources.forEach( function(sourceFolder) {
      filemapContents.split('\n').forEach(function(line) {
         if (!line || line.charAt(0) === '#' ) return;
 
-        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*$/);
+        var match = line.match(/^([a-f0-9A-F]{40})\s+([^\s]+)\s*(?:#.*)?$/);
         if (!match) {
           console.error('Filemap: <'+filemap+'> has invalid <hash file> line: <'+line+'>');
           return;
@@ -92,14 +92,14 @@ sources.forEach( function(sourceFolder) {
 });  
 
 function toHash(request) {
-  switch (request.headers.host) {
-     case 'dl.google.com':
-     case 'dl-ssl.google.com':
-        break;
-     
-     default:
-        return "";
-  } 
+//switch (request.headers.host) {
+//   case 'dl.google.com':
+//   case 'dl-ssl.google.com':
+//      break;
+//   
+//   default:
+//      return "";
+//} 
 
   var urlPath = url.parse(request.url).path;
 
@@ -112,48 +112,65 @@ function toHash(request) {
 console.error("URL Map:\n", url2hash );
 console.error("File Map:\n", hash2file);
 
-require('http').createServer( function(request, response) {
-  console.error("REQ <"+request.url+">");
-  if (request.url === '/?close-server' ) {
-     if (listOnly) {
-       var e = 0;
-       while(e < selected.length) {
-          response.write (selected[e]+'\n');
-          e++ ;
-       }
-
-       response.end();
-     }
-
-     process.exit(0);
-  }
-
-  var fileHash = toHash(request);
-  if (fileHash === "" ) {
-    if ( listOnly ) selected.push(request.url);
-    console.error("NOT FOUND\n");
-    response.writeHead(404);
-    response.end();
-  }
-  else {
-      var fileName = hash2file[fileHash];
-      console.log( "FOUND AS FILE " + fileName + "; SERVING...");
-      var fileStream = fs.createReadStream(fileName);
+function RUN(kind) {
+  return function RUN(request, response) {
+    console.error("REQ <"+request.url+">", request.headers, kind );
+    if (request.url === '/?close-server' ) {
+       if (listOnly) {
+         var e = 0;
+         while(e < selected.length) {
+            response.write (selected[e]+'\n');
+            e++ ;
+         }
     
-      fileStream.on('data', function(bytes) { 
-           response.write(bytes);
-      });
-    
-      fileStream.on('error', function(error) {
-           console.error("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString() + "\n" );
-           response.writeHead(404);
-           response.end();
-      }) ; 
-      fileStream.on('close', function() {
-         console.log( "DONE SERVING.\n");
          response.end();
-      });
+       }
+    
+       process.exit(0);
+    }
+    
+    var fileHash = toHash(request), fileName = "", fileStream = null, err = null;
+    var baseName = "";
+    if (fileHash !== "" && has.call(hash2file, fileHash)) {
+      baseName = fileName = hash2file[fileHash];
+      try { fs.statSync(fileName); fileStream = fs.createReadstream(fileName); console.error('found ['+baseName+'] in ['+fileName+']'); }
+      catch (e) { console.error('no ['+baseName+'] in ['+fileName+']', e); err = e; }
+    }
+    else {
+      console.error(fileHash === "" ? 'NOT IN THE HASHMAP;' : 'NOT IN THE LOCAL;', 'searching ...' );
+      var baseName = request.url;
+      var list = sources, l = 0;
+      while (l < list.length) {
+        fileName = list[l++] + '/' + baseName;
+        try { fs.statSync(fileName); fileStream = fs.createReadStream(fileName); console.error('found ['+baseName+'] in ['+fileName +']'); break; }
+        catch (e) { console.error('no ['+baseName+'] in ['+fileName+']', e); err = e; }
+      }
+    }
 
+    if (fileStream === null) {
+      console.error('search finished; no ['+request.url+']');
+      response.write(404);
+      
+      console.log(kind+'://'+request.headers.host+request.url);
+    else {
+        console.error('search finished; found ['+request.url+'] in ['+fileName+']; SERVING...' );
+
+        fileStream.on('data', function(bytes) { 
+             response.write(bytes);
+        });
+      
+        fileStream.on('error', function(error) {
+             console.error("ERROR SERVING FILE: <"+fileName+">: \n" + error.toString() + "\n" );
+             response.writeHead(404);
+             response.end();
+        }) ; 
+        fileStream.on('close', function() {
+           console.error( "DONE SERVING.\n");
+           response.end();
+        });
+    } 
   }
+}
 
-}).listen(port);
+require('http').createServer(RUN('http')).listen(port || 80);
+require('https').createServer({cert: fs.readFileSync('cert.pem'), key: fs.readFileSync('key.pem')},RUN('https')).listen(port || 443  );

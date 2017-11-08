@@ -215,11 +215,14 @@ if (m === "repo") {
          console.error("SKIPPING <"+chk+">:", have[chk] );
          continue;
        }
+
+       if (hash[chk].u.match(/osx|darwin|beta/))
+         continue;
  
        var n = hash[chk].n;
        var len = n.byName['size'] || n.byName['sdk:size'];
        len = parseInt(len[0].ch[0].ch);
-       console.log( chk, hash[chk].u );
+       console.log( chk, hash[chk].u, '#' + len );
        total += len;
     }
   }

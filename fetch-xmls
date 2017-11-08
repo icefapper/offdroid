@@ -127,7 +127,7 @@ done
 idx=0
 
 XML_ADDONLIST_FILE_NAMES=""
-MAX_ADDONLIST=5
+MAX_ADDONLIST=8
 
 URL="$ROOT/$XML_ADDONLIST.xml"
 SAVEDIR="$XML_DIR/$DL"
@@ -162,4 +162,14 @@ for ADDON in $ADDON_URLS; do
   XML_REPO_FILE_NAMES="$XML_REPO_FILE_NAMES $ADDON $SAVEDIR"
 done
 
+MAVEN="$XML_DIR/$DL"
+MROOT="https://dl.google.com/dl/android/maven2"
+get-and-save "$MROOT/master-index.xml" "$MAVEN"
+DL=$[ $DL + 1 ];
 
+MAVEN=$(node $OFFDROID/maven.js "$MAVEN")
+for M in $MAVEN;   do 
+  get-and-save "$MROOT/$M/group-index.xml" "$XML_DIR/$DL";
+  DL=$[ $DL + 1 ];
+
+done
